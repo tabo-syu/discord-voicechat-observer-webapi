@@ -8,7 +8,7 @@ export class UserController {
 
   @Get()
   async getUsers(): Promise<UserResponse[]> {
-    return await this.userService.users();
+    return await this.userService.users({});
   }
 
   @Get(':id')

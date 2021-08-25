@@ -1,15 +1,23 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from './prisma.service';
 import { UserResponse } from 'src/types';
 import { DiscordService } from './Discord.service';
-import { Prisma } from '@prisma/client';
+
+type FindManyArgs = {
+  skip?: number;
+  take?: number;
+  cursor?: Prisma.UserWhereUniqueInput;
+  where?: Prisma.UserWhereInput;
+  orderBy?: Prisma.UserOrderByInput;
+};
 
 @Injectable()
 export class UserService {
   constructor(private prisma: PrismaService, private discord: DiscordService) {}
 
-  async users(): Promise<UserResponse[]> {
-    const dbUsers = await this.prisma.user.findMany();
+  async users(params: FindManyArgs): Promise<UserResponse[]> {
+    const dbUsers = await this.prisma.user.findMany(params);
 
     const discordUsersData = await Promise.all(
       dbUsers.map((dbUser) => this.discord.users.fetch(dbUser.id)),
@@ -27,17 +35,16 @@ export class UserService {
             size: 256,
           }) ?? discordUser.defaultAvatarURL,
       };
+
       return { ...dbUser, ...discordData };
     });
 
     return response;
   }
 
-  async user(
-    userWhereUniqueInput: Prisma.UserWhereUniqueInput,
-  ): Promise<UserResponse> {
+  async user(input: Prisma.UserWhereUniqueInput): Promise<UserResponse> {
     const dbUser = await this.prisma.user.findUnique({
-      where: userWhereUniqueInput,
+      where: input,
     });
     const discordUser = await this.discord.users.fetch(dbUser.id);
     const discordData = {

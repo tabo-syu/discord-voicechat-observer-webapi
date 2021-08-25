@@ -1,41 +1,32 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from './prisma.service';
-import { UserService } from './user.service';
 import { DiscordService } from './discord.service';
+import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import { PrismaService } from './prisma.service';
 import { VoiceChannelResponse } from 'src/types';
+
+type FindManyArgs = {
+  skip?: number;
+  take?: number;
+  cursor?: Prisma.VoiceChannelWhereUniqueInput;
+  where?: Prisma.VoiceChannelWhereInput;
+  orderBy?: Prisma.VoiceChannelOrderByInput;
+};
 
 @Injectable()
 export class VoiceChannelService {
-  constructor(
-    private prisma: PrismaService,
-    private discord: DiscordService,
-    private user: UserService,
-  ) {}
+  constructor(private prisma: PrismaService, private discord: DiscordService) {}
 
-  async voiceChannels(): Promise<VoiceChannelResponse[]> {
-    const voiceChannels = await this.prisma.voiceChannel.findMany({
-      include: {
-        Participants: true,
-      },
-    });
+  async voiceChannels(params: FindManyArgs): Promise<VoiceChannelResponse[]> {
+    const voiceChannels = await this.prisma.voiceChannel.findMany(params);
 
     const response = await Promise.all(
       voiceChannels.map(async (voiceChannel) => {
         const guild = await this.discord.guilds.fetch(voiceChannel.guildId);
         const channel = guild.channels.cache.get(voiceChannel.id);
 
-        const participants = await Promise.all(
-          voiceChannel.Participants.map((participant) => {
-            return this.user.user({ id: participant.id });
-          }),
-        );
-
         return {
-          id: voiceChannel.id,
+          ...voiceChannel,
           name: channel.name,
-          guildId: voiceChannel.guildId,
-          updatedAt: voiceChannel.updatedAt,
-          participants,
         };
       }),
     );
@@ -43,31 +34,19 @@ export class VoiceChannelService {
     return response;
   }
 
-  async voiceChannel(id: string): Promise<VoiceChannelResponse> {
+  async voiceChannel(
+    input: Prisma.UserWhereUniqueInput,
+  ): Promise<VoiceChannelResponse> {
     const voiceChannel = await this.prisma.voiceChannel.findUnique({
-      where: {
-        id,
-      },
-      include: {
-        Participants: true,
-      },
+      where: input,
     });
-
-    const participants = await Promise.all(
-      voiceChannel.Participants.map((participant) => {
-        return this.user.user({ id: participant.id });
-      }),
-    );
 
     const guild = await this.discord.guilds.fetch(voiceChannel.guildId);
     const channel = guild.channels.cache.get(voiceChannel.id);
 
     const response = {
-      id: voiceChannel.id,
+      ...voiceChannel,
       name: channel.name,
-      guildId: voiceChannel.guildId,
-      updatedAt: voiceChannel.updatedAt,
-      participants,
     };
 
     return response;

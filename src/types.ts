@@ -16,5 +16,4 @@ export type SessionLogResponse = SessionLog;
 
 export type VoiceChannelResponse = VoiceChannel & {
   name: string;
-  participants: UserResponse[];
 };

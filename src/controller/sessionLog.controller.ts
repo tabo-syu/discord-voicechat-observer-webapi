@@ -8,11 +8,11 @@ export class SessionLogController {
 
   @Get()
   async getSessions(): Promise<SessionLogResponse[]> {
-    return await this.sessionLogService.sessionLogs();
+    return await this.sessionLogService.sessionLogs({});
   }
 
   @Get(':id')
   async findSession(@Param('id') id: string): Promise<SessionLogResponse> {
-    return await this.sessionLogService.sessionLog(id);
+    return await this.sessionLogService.sessionLog({ id });
   }
 }
