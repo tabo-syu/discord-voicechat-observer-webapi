@@ -1,6 +1,14 @@
 import { Controller, Get, Param } from '@nestjs/common';
-import { GuildResponse, VoiceChannelResponse, UserResponse } from 'src/types';
+import {
+  GuildResponse,
+  VoiceChannelResponse,
+  UserResponse,
+  SessionResponse,
+  SessionLogResponse,
+} from 'src/types';
 import { GuildService } from '../service/guild.service';
+import { SessionService } from '../service/session.service';
+import { SessionLogService } from '../service/sessionLog.service';
 import { VoiceChannelService } from '../service/voiceChannel.service';
 import { UserService } from '../service/user.service';
 
@@ -8,6 +16,8 @@ import { UserService } from '../service/user.service';
 export class GuildController {
   constructor(
     private readonly guildService: GuildService,
+    private readonly sessionService: SessionService,
+    private readonly sessionLogService: SessionLogService,
     private readonly voiceChannelService: VoiceChannelService,
     private readonly userService: UserService,
   ) {}
@@ -31,7 +41,7 @@ export class GuildController {
     });
   }
 
-  @Get(':id/participants')
+  @Get(':id/users')
   async findParticipants(@Param('id') id: string): Promise<UserResponse[]> {
     const users = await this.userService.users({
       where: {
@@ -44,5 +54,39 @@ export class GuildController {
     });
 
     return users;
+  }
+
+  @Get(':id/sessions')
+  async findSessions(@Param('id') id: string): Promise<SessionResponse[]> {
+    const sessions = await this.sessionService.sessions({
+      where: {
+        VoiceChannel: {
+          Guild: {
+            id: id,
+          },
+        },
+      },
+    });
+
+    return sessions;
+  }
+
+  @Get(':id/sessionLogs')
+  async findSessionLogs(
+    @Param('id') id: string,
+  ): Promise<SessionLogResponse[]> {
+    const sessionLogs = await this.sessionLogService.sessionLogs({
+      where: {
+        Session: {
+          VoiceChannel: {
+            Guild: {
+              id: id,
+            },
+          },
+        },
+      },
+    });
+
+    return sessionLogs;
   }
 }
