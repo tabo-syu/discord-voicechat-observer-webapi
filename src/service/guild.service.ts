@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from './prisma.service';
-import { DiscordService } from './Discord.service';
+import { DiscordService } from './discord.service';
 import { GuildResponse } from 'src/types';
 
 type FindManyArgs = {

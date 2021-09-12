@@ -8,7 +8,7 @@ import { SessionLogController } from './controller/sessionLog.controller';
 import { UserController } from './controller/user.controller';
 import { VoiceChannelController } from './controller/voiceChannel.controller';
 
-import { DiscordService } from './service/Discord.service';
+import { DiscordService } from './service/discord.service';
 import { GuildService } from './service/guild.service';
 import { PrismaService } from './service/prisma.service';
 import { SessionService } from './service/session.service';

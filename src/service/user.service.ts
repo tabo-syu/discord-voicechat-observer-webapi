@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from './prisma.service';
 import { UserResponse } from 'src/types';
-import { DiscordService } from './Discord.service';
+import { DiscordService } from './discord.service';
 
 type FindManyArgs = {
   skip?: number;
