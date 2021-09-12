@@ -22,20 +22,6 @@ export class SessionController {
     return await this.sessionService.session({ id });
   }
 
-  @Get(':id/sessionLogs')
-  async findSessionLogs(
-    @Param('id') id: string,
-  ): Promise<SessionLogResponse[]> {
-    return await this.sessionLogService.sessionLogs({
-      where: {
-        sessionId: id,
-      },
-      orderBy: {
-        createdAt: 'asc',
-      },
-    });
-  }
-
   @Get(':id/users')
   async findUsers(@Param('id') id: string): Promise<UserResponse[]> {
     const users = await this.userService.users({
@@ -51,5 +37,64 @@ export class SessionController {
     });
 
     return users;
+  }
+
+  @Get(':id/sessionLogs')
+  async findSessionLogs(@Param('id') id: string): Promise<
+    (SessionLogResponse & {
+      leftAt: Date;
+      username: string;
+      avatarUrl: string;
+    })[][]
+  > {
+    const sessionLogs = await this.sessionLogService.sessionLogs({
+      where: {
+        sessionId: id,
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    });
+
+    const sessionUsers = await this.userService.users({
+      where: {
+        SessionLogs: {
+          some: {
+            Session: {
+              id: id,
+            },
+          },
+        },
+      },
+    });
+
+    const sessionUserLogs = sessionLogs.map((sessionLog) => {
+      const user = sessionUsers.find((user) => user.id === sessionLog.userId);
+
+      return {
+        ...sessionLog,
+        username: user?.username,
+        avatarUrl: user?.avatarUrl,
+      };
+    });
+
+    const uniqueUserIds = Array.from(
+      new Set(sessionUserLogs.map((session) => session.userId)),
+    );
+
+    const logs = uniqueUserIds.map((userId) => {
+      const sessionLogs = sessionUserLogs.filter(
+        (session) => session.userId === userId,
+      );
+      const joinedLogs = sessionLogs.filter((log) => log.action === 'joined');
+      const leftLogs = sessionLogs.filter((log) => log.action === 'left');
+
+      return joinedLogs.map((joinedLog, index) => ({
+        ...joinedLog,
+        leftAt: leftLogs[index].createdAt,
+      }));
+    });
+
+    return logs;
   }
 }
