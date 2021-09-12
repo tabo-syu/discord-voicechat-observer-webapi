@@ -56,6 +56,31 @@ export class GuildController {
     return users;
   }
 
+  @Get(':guildId/users/:userId/sessions')
+  async findGuildParticipantSessions(
+    @Param('guildId') guildId: string,
+    @Param('userId') userId: string,
+  ): Promise<SessionResponse[]> {
+    const sessions = await this.sessionService.sessions({
+      where: {
+        AND: {
+          VoiceChannel: {
+            guildId,
+          },
+          SessionLogs: {
+            some: {
+              User: {
+                id: userId,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return sessions;
+  }
+
   @Get(':id/sessions')
   async findSessions(@Param('id') id: string): Promise<SessionResponse[]> {
     const sessions = await this.sessionService.sessions({
